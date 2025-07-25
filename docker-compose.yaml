@@ -1,0 +1,23 @@
+services:
+  
+  budget_tracker:
+    container_name: budget-tracker
+    build: .
+    environment:
+      PORT: 8000
+      POSTGRES_URL: "postgres://postgres:password@postgres:5432/postgres"
+    ports:
+      - 8000:8000
+    depends_on:
+      - postgres
+
+  postgres:
+    container_name: postgres
+    image: postgres:17.5-alpine
+    environment:
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./tmp/pg-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
