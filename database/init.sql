@@ -1,12 +1,12 @@
 CREATE TABLE IF NOT EXISTS envelopes (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     title varchar(255),
-    money money
+    money decimal(7, 2)
 );
 
-CREATE TABLE IF NOT EXISTS transaction (
+CREATE TABLE IF NOT EXISTS transactions (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    envolope_id uuid REFERENCES envelopes(id),
+    envelope_id uuid REFERENCES envelopes(id) NOT NULL,
     title varchar(255),
-    price money
+    price decimal(7, 2)
 );
