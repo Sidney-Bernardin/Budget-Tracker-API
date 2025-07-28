@@ -1,44 +1,47 @@
-import * as db from './database.js'
+import * as database from './database.js'
 
 const qInsertTransaction = `
     INSERT INTO transactions (envelope_id, title, price)
     VALUES ($1, $2, $3)
     RETURNING *`
 export async function insertTransaction({ envelopeID, title, price }) {
-    const result = await db.client.query(qInsertTransaction, [envelopeID, title, price])
-    // TODO: handle foreign envelope err
-    return result.rows[0]
+    try {
+        return (await database.client.query(qInsertTransaction, [envelopeID, title, price])).rows[0]
+    } catch (err) {
+        if (err.code === "23503")
+            throw new database.DatabaseError(database.entityEnvelope, database.databaseErrorTypeEntityNotFound)
+    }
 }
 
 const qSelectTransactions = `SELECT * FROM transactions`
 export async function selectTransactions() {
-    return (await db.client.query(qSelectTransactions)).rows
+    return (await database.client.query(qSelectTransactions)).rows
 }
 
 const qSelectTransactionByID = `SELECT * FROM transactions WHERE id = $1`
 export async function selectTransactionByID(transactionID) {
-    const result = await db.client.query(qSelectTransactionByID, [transactionID])
-    if (result.rowCount < 1) {
-        throw new db.NotFoundError("Transaction")
-    }
+    const result = await database.client.query(qSelectTransactionByID, [transactionID])
+    if (result.rowCount < 1)
+        throw new database.DatabaseError(database.entityTransaction, database.databaseErrorTypeEntityNotFound)
+
     return result.rows[0]
 }
 
-export async function updateTransaction(transactionID, { newTitle, newPrice }) {
+export async function updateTransactionByID(transactionID, { newTitle, newPrice }) {
     try {
-        await db.client.query("BEGIN")
+        await database.client.query("BEGIN")
 
-        let oldPrice = await db.client.query(`
+        let oldPrice = await database.client.query(`
             SELECT price
             FROM transactions
             WHERE id = $1
         `, [transactionID])
 
         if (oldPrice.rowCount < 1) {
-            throw new db.NotFoundError("Transaction")
+            throw new database.NotFoundError("Transaction")
         }
 
-        const envelopeUpdateResult = await db.client.query(`
+        const envelopeUpdateResult = await database.client.query(`
             UPDATE envelopes
             SET money = (money + $1) - $2
             WHERE id IN (SELECT envelope_id FROM transactions WHERE id = $3)
@@ -48,7 +51,7 @@ export async function updateTransaction(transactionID, { newTitle, newPrice }) {
             throw new Error("envelope not found")
         }
 
-        const newTransaction = await db.client.query(`
+        const newTransaction = await database.client.query(`
             UPDATE transactions
             SET
                 title = $1,
@@ -61,18 +64,17 @@ export async function updateTransaction(transactionID, { newTitle, newPrice }) {
             throw new Error("transaction not found")
         }
 
-        await db.client.query("COMMIT")
+        await database.client.query("COMMIT")
         return newTransaction.rows[0]
     } catch (e) {
-        await db.client.query("ROLLBACK")
+        await database.client.query("ROLLBACK")
         throw e
     }
 }
 
 const qDeleteTransaction = `DELETE FROM transactions WHERE id = $1`
-export async function deleteTransaction(transactionID) {
-    const result = await db.client.query(qDeleteTransaction, [transactionID])
-    if (result.rowCount < 1) {
-        throw new db.NotFoundError("Transaction")
-    }
+export async function deleteTransactionByID(transactionID) {
+    const result = await database.client.query(qDeleteTransaction, [transactionID])
+    if (result.rowCount < 1)
+        throw new database.DatabaseError(database.entityTransaction, database.databaseErrorTypeEntityNotFound)
 }

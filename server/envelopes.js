@@ -7,7 +7,6 @@ import * as domainEnvelopes from "../domain/envelopes.js"
 
 export const router = express.Router()
 
-
 router.post("/", async (req, res) => {
     if (!req.body)
         throw new server.ServerError(server.serverErrorTypeInvalidRequestBody, "Request body cannot be empty.")

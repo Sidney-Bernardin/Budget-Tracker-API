@@ -22,13 +22,13 @@ export async function getEnvelopes() {
 
 export async function getEnvelopeByID(envelopeID) {
     if (!uuid.validate(envelopeID))
-        throw new domain.DomainError(domain.domainErrorTypeInvalidUUID, "Envelope-ID isn't a valid UUID.")
+        throw new domain.DomainError(domain.domainErrorTypeUUIDInvalid, "Envelope-ID isn't a valid UUID.")
 
     try {
         return await dbEnvelopes.selectEnvelopeByID(envelopeID)
     } catch (err) {
         if (err.name === "DatabaseError" && err.type === db.databaseErrorTypeEntityNotFound)
-            throw new domain.DomainError(domain.domainErrorTypeEntityNotFound, "Envelope not found.")
+            throw new domain.DomainError(domain.domainErrorTypeEnvelopeNotFound, "Envelope not found.")
 
         throw err
     }
@@ -36,18 +36,18 @@ export async function getEnvelopeByID(envelopeID) {
 
 export async function updateEnvelopeByID(envelopeID, { title, money }) {
     if (!uuid.validate(envelopeID))
-        throw new domain.DomainError(domain.domainErrorTypeInvalidUUID, "Envelope-ID isn't a valid UUID.")
+        throw new domain.DomainError(domain.domainErrorTypeUUIDInvalid, "Envelope-ID isn't a valid UUID.")
     if (!title || title === "")
         throw new domain.DomainError(domain.domainErrorTypeEntityEnvelopeTitle, "Envelope title cannot be empty.")
 
     try {
-        return await dbEnvelopes.updateEnvelope(envelopeID, {
+        return await dbEnvelopes.updateEnvelopeByID(envelopeID, {
             title: title,
             money: money || 0,
         })
     } catch (err) {
         if (err.name === "DatabaseError" && err.type === db.databaseErrorTypeEntityNotFound)
-            throw new domain.DomainError(domain.domainErrorTypeEntityNotFound, "Envelope not found.")
+            throw new domain.DomainError(domain.domainErrorTypeEnvelopeNotFound, "Envelope not found.")
 
         throw err
     }
@@ -55,13 +55,13 @@ export async function updateEnvelopeByID(envelopeID, { title, money }) {
 
 export async function deleteEnvelope(envelopeID) {
     if (!uuid.validate(envelopeID))
-        throw new domain.DomainError(domain.domainErrorTypeInvalidUUID, "Envelope-ID isn't a valid UUID.")
+        throw new domain.DomainError(domain.domainErrorTypeUUIDInvalid, "Envelope-ID isn't a valid UUID.")
 
     try {
-        await dbEnvelopes.deleteEnvelope(envelopeID)
+        await dbEnvelopes.deleteEnvelopeByID(envelopeID)
     } catch (err) {
         if (err.name === "DatabaseError" && err.type === db.databaseErrorTypeEntityNotFound)
-            throw new domain.DomainError(domain.domainErrorTypeEntityNotFound, "Envelope not found.")
+            throw new domain.DomainError(domain.domainErrorTypeEnvelopeNotFound, "Envelope not found.")
 
         throw err
     }

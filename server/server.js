@@ -7,7 +7,6 @@ import * as domain from "../domain/domain.js"
 
 
 const serverErrorTypeInternalServerError = "internal-server-error"
-const serverErrorTypeDomainError = "domain-error"
 const serverErrorTypeInvalidRequestBody = "invalid-request-body"
 
 export class ServerError extends Error {
@@ -15,16 +14,17 @@ export class ServerError extends Error {
         super(`${type}: ${message}`)
         this.name = "ServerError"
         this.type = type
-        this.statusCode = ServerError.statusCodes[type] || 500
+        this.statusCode = ServerError.statusCodes[type]
     }
 
     static statusCodes = {
-        "entity.parse.failed": 400,
         [serverErrorTypeInternalServerError]: 500,
         [serverErrorTypeInvalidRequestBody]: 400,
-        [domain.domainErrorTypeInvalidUUID]: 400,
-        [domain.domainErrorTypeEntityEnvelopeTitle]: 400,
-        [domain.domainErrorTypeEntityNotFound]: 404,
+        [domain.domainErrorTypeEnvelopeNotFound]: 404,
+        [domain.domainErrorTypeTransactionNotFound]: 404,
+        [domain.domainErrorTypeUUIDInvalid]: 400,
+        [domain.domainErrorTypeEnvelopeTitleInvalid]: 400,
+        [domain.domainErrorTypeTransactionPriceInvalid]: 400,
     }
 }
 
@@ -38,15 +38,18 @@ app.use("/envelopes", envelopes.router)
 app.use("/transactions", transactions.router)
 
 app.use((err, req, res, next) => {
-
     let serverError
     switch (true) {
         case err.name === "ServerError":
             serverError = err
             break
 
-        case err.type != undefined:
+        case err.name === "DomainError":
             serverError = new ServerError(err.type, err.message)
+            break
+
+        case err.type === "entity.parse.failed":
+            serverError = new ServerError(serverErrorTypeInvalidRequestBody, err.message)
             break
 
         default:

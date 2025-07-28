@@ -6,6 +6,8 @@ export class DomainError extends Error {
     }
 }
 
-export const domainErrorTypeInvalidUUID = "invalid-uuid"
-export const domainErrorTypeEntityEnvelopeTitle = "invalid-envelope-title"
-export const domainErrorTypeEntityNotFound = "entity-not-found"
+export const domainErrorTypeEnvelopeNotFound = "envelope-not-found"
+export const domainErrorTypeTransactionNotFound = "transaction-not-found"
+export const domainErrorTypeUUIDInvalid = "uuid-invalid"
+export const domainErrorTypeEnvelopeTitleInvalid = "envelope-title-invalid"
+export const domainErrorTypeTransactionPriceInvalid = "transaction-price-invalid"

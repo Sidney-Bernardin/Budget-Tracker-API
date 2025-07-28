@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS envelopes (
 
 CREATE TABLE IF NOT EXISTS transactions (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    envelope_id uuid REFERENCES envelopes(id) NOT NULL,
+    envelope_id uuid REFERENCES envelopes(id) ON DELETE CASCADE NOT NULL,
     title varchar(255),
     price decimal(7, 2)
 );

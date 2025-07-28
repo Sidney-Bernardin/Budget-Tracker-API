@@ -5,8 +5,7 @@ const qInsertEnvelope = `
     VALUES ($1, $2)
     RETURNING *`
 export async function insertEnvelope({ title, money }) {
-    const result = await database.client.query(qInsertEnvelope, [title, money])
-    return result.rows[0]
+    (await database.client.query(qInsertEnvelope, [title, money])).rows[0]
 }
 
 const qSelectEnvelopes = `SELECT * FROM envelopes`
@@ -18,7 +17,7 @@ const qSelectEnvelopeByID = `SELECT * FROM envelopes WHERE id = $1`
 export async function selectEnvelopeByID(envelopeID) {
     const result = await database.client.query(qSelectEnvelopeByID, [envelopeID])
     if (result.rowCount < 1)
-        throw new database.DatabaseError(database.databaseErrorTypeEntityNotFound, "Envelope not found.")
+        throw new database.DatabaseError(database.entityEnvelope, database.databaseErrorTypeEntityNotFound)
 
     return result.rows[0]
 }
@@ -26,21 +25,31 @@ export async function selectEnvelopeByID(envelopeID) {
 const qUpdateEnvelopeByID = `
     UPDATE envelopes
     SET
-        title = $1,
-        money = $2
+        title = COALESCE($1, title),
+        money = COALESCE($2, money)
     WHERE id = $3
     RETURNING *`
-export async function updateEnvelope(envelopeID, { title, money }) {
+export async function updateEnvelopeByID(envelopeID, { title, money }) {
     const result = await database.client.query(qUpdateEnvelopeByID, [title, money, envelopeID])
     if (result.rowCount < 1)
-        throw new database.DatabaseError(database.databaseErrorTypeEntityNotFound, "Envelope not found.")
+        throw new database.DatabaseError(database.entityEnvelope, database.databaseErrorTypeEntityNotFound)
 
     return result.rows[0]
 }
 
+const qAddEnvelopeMoneyByID = `
+    UPDATE envelopes
+    SET money = money + $1
+    WHERE id = $2`
+export async function addEnvelopeMoneyByID(envelopeID, money) {
+    const result = await database.client.query(qAddEnvelopeMoneyByID, [money, envelopeID])
+    if (result.rowCount < 1)
+        throw new database.DatabaseError(database.entityEnvelope, database.databaseErrorTypeEntityNotFound)
+}
+
 const qDeleteEnvelopeByID = `DELETE FROM envelopes WHERE id = $1`
-export async function deleteEnvelope(envelopeID) {
+export async function deleteEnvelopeByID(envelopeID) {
     const result = await database.client.query(qDeleteEnvelopeByID, [envelopeID])
     if (result.rowCount < 1)
-        throw new database.DatabaseError(database.databaseErrorTypeEntityNotFound, "Envelope not found.")
+        throw new database.DatabaseError(database.entityEnvelope, database.databaseErrorTypeEntityNotFound)
 }
