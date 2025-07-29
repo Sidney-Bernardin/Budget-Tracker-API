@@ -5,7 +5,7 @@ const qInsertEnvelope = `
     VALUES ($1, $2)
     RETURNING *`
 export async function insertEnvelope({ title, money }) {
-    (await database.client.query(qInsertEnvelope, [title, money])).rows[0]
+    return (await database.client.query(qInsertEnvelope, [title, money])).rows[0]
 }
 
 const qSelectEnvelopes = `SELECT * FROM envelopes`

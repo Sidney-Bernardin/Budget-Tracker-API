@@ -8,7 +8,7 @@ import * as domain from "./domain.js"
 
 export async function createEnvelope({ title, money }) {
     if (!title || title === "")
-        throw new domain.DomainError(domain.domainErrorTypeEntityEnvelopeTitle, "Envelope title cannot be empty.")
+        throw new domain.DomainError(domain.domainErrorTypeEnvelopeTitleInvalid, "Envelope title cannot be empty.")
 
     return await dbEnvelopes.insertEnvelope({
         title: title,
@@ -37,13 +37,11 @@ export async function getEnvelopeByID(envelopeID) {
 export async function updateEnvelopeByID(envelopeID, { title, money }) {
     if (!uuid.validate(envelopeID))
         throw new domain.DomainError(domain.domainErrorTypeUUIDInvalid, "Envelope-ID isn't a valid UUID.")
-    if (!title || title === "")
-        throw new domain.DomainError(domain.domainErrorTypeEntityEnvelopeTitle, "Envelope title cannot be empty.")
 
     try {
         return await dbEnvelopes.updateEnvelopeByID(envelopeID, {
             title: title,
-            money: money || 0,
+            money: money,
         })
     } catch (err) {
         if (err.name === "DatabaseError" && err.type === db.databaseErrorTypeEntityNotFound)

@@ -11,11 +11,11 @@ export async function createTransaction({ envelopeID, title, price }) {
     if (!uuid.validate(envelopeID))
         throw new domain.DomainError(domain.domainErrorTypeUUIDInvalid, "Envelope-ID isn't a valid UUID.")
     if (!title || title === "")
-        throw new domain.DomainError(domain.domainErrorTypeInvalidTransactionTitle, "Transaction title cannot be empty.")
+        throw new domain.DomainError(domain.domainErrorTypeTransactionTitleInvalid, "Transaction title cannot be empty.")
     if (!price || price < 0)
         throw new domain.DomainError(domain.domainErrorTypeTransactionPriceInvalid, "Transaction price must be zero or more.")
 
-    return db.transaction(async () => {
+    return await db.transaction(async () => {
         try {
             await dbEnvelopes.addEnvelopeMoneyByID(envelopeID, -price)
         } catch (err) {
@@ -48,34 +48,36 @@ export async function getTransactionByID(transactionID) {
 export async function updateTransactionByID(transactionID, { title, price }) {
     if (!uuid.validate(transactionID))
         throw new domain.DomainError(domain.domainErrorTypeUUIDInvalid, "Transaction-ID isn't a valid UUID.")
-    if (!title || title === "")
-        throw new domain.DomainError(domain.domainErrorTypeEntityTransactionTitle, "Transaction title cannot be empty.")
-    if (!price || price < 0)
-        throw new domain.DomainError(domain.domainErrorTypeTransactionPriceInvalid, "Transaction price must be zero or more.")
 
-    try {
-        return await dbTransactions.updateTransactionByID(transactionID, {
-            title: title,
-            price: price || 0,
-        })
-    } catch (err) {
-        if (err.name === "DatabaseError" && err.type === db.databaseErrorTypeEntityNotFound)
-            throw new domain.DomainError(domain.domainErrorTypeTransactionNotFound, "Transaction not found.")
+    return await db.transaction(async () => {
+        try {
+            var oldTransaction = await dbTransactions.selectTransactionByID(transactionID)
+        } catch (err) {
+            if (err.name === "DatabaseError" && err.type === db.databaseErrorTypeEntityNotFound)
+                throw new domain.DomainError(domain.domainErrorTypeTransactionNotFound, "Transaction not found.")
+        }
 
-        throw err
-    }
+        let diff = (oldTransaction.price + price)
+        if (diff >= 0) diff = -diff
+
+        await dbEnvelopes.addEnvelopeMoneyByID(oldTransaction.envelope_id, -oldTransaction.price + price)
+        return await dbTransactions.updateTransactionByID(transactionID, { title, price })
+    })
 }
 
 export async function deleteTransaction(transactionID) {
     if (!uuid.validate(transactionID))
         throw new domain.DomainError(domain.domainErrorTypeUUIDInvalid, "Transaction-ID isn't a valid UUID.")
 
-    try {
-        await dbTransactions.deleteTransactionByID(transactionID)
-    } catch (err) {
-        if (err.name === "DatabaseError" && err.type === db.databaseErrorTypeEntityNotFound)
-            throw new domain.DomainError(domain.domainErrorTypeTransactionNotFound, "Transaction not found.")
+    return await db.transaction(async () => {
+        try {
+            var oldTransaction = await dbTransactions.selectTransactionByID(transactionID)
+        } catch (err) {
+            if (err.name === "DatabaseError" && err.type === db.databaseErrorTypeEntityNotFound)
+                throw new domain.DomainError(domain.domainErrorTypeTransactionNotFound, "Transaction not found.")
+        }
 
-        throw err
-    }
+        await dbEnvelopes.addEnvelopeMoneyByID(oldTransaction.envelope_id, -oldTransaction.price)
+        await dbTransactions.deleteTransactionByID(transactionID)
+    })
 }

@@ -24,6 +24,7 @@ export class ServerError extends Error {
         [domain.domainErrorTypeTransactionNotFound]: 404,
         [domain.domainErrorTypeUUIDInvalid]: 400,
         [domain.domainErrorTypeEnvelopeTitleInvalid]: 400,
+        [domain.domainErrorTypeTransactionTitleInvalid]: 400,
         [domain.domainErrorTypeTransactionPriceInvalid]: 400,
     }
 }
@@ -38,6 +39,7 @@ app.use("/envelopes", envelopes.router)
 app.use("/transactions", transactions.router)
 
 app.use((err, req, res, next) => {
+
     let serverError
     switch (true) {
         case err.name === "ServerError":
