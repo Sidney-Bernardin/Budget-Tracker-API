@@ -3,6 +3,7 @@ import morgan from "morgan"
 
 import * as envelopes from "./envelopes.js"
 import * as transactions from "./transactions.js"
+import * as docs from "./docs.js"
 import * as domain from "../domain/domain.js"
 
 
@@ -37,6 +38,7 @@ app.use(express.json())
 
 app.use("/envelopes", envelopes.router)
 app.use("/transactions", transactions.router)
+app.use("/docs", docs.router)
 
 app.use((err, req, res, next) => {
 
@@ -60,5 +62,5 @@ app.use((err, req, res, next) => {
             break
     }
 
-    return res.status(serverError.statusCode).send(serverError.message)
+    return res.status(serverError.statusCode).send({ "msg": serverError.message })
 })
